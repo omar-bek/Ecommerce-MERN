@@ -1,6 +1,9 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import userRoute from './routers/userRoute.js';
+import { seedProducts } from './services/productService.js';
+import productRoute from './routers/productRoute.js';
+import cartRoute from './routers/cartRoute.js'
 
 
 const app = express();
@@ -13,7 +16,15 @@ mongoose.connect('mongodb://localhost:27017/ecommerce')
     
   }).catch((err) => console.log("failed to coneect"));
   
-  app.use('/user',userRoute)
+//seed some products 
+seedProducts();
+
+
+
+app.use('/user', userRoute);
+app.use('/products', productRoute);
+app.use('/cart', cartRoute);
+
 
 
 

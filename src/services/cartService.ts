@@ -2,6 +2,7 @@ import type { ObjectId } from "mongoose";
 import { cartModel } from "../models/cartModel.js";
 import type { Product } from "../models/productModel.js";
 import productModel from "../models/productModel.js";
+import { orderModel, type IOrderItems } from "../models/orderModel.js";
 
 
  interface CartDto {
@@ -37,12 +38,13 @@ export const ClearCartForUser = async ({ userId }: ClearCart) => {
     cart.items = [];
     cart.totalamount = 0;
 
-     const updatedCart = await cart.save();
+    const updatedCart = await cart.save();
     return { data: updatedCart, statusCode: 201 };
 
 
     
-}
+};
+
 
 
 
@@ -173,4 +175,44 @@ export const deleteItemFromCart = async ({ productId,  userId }: deleteCartItems
        return { data: updatedCart, statusCode: 200 };
 }
 
+interface Checkout {
+    userId: string,
+    address:string
+}
 
+export const checkout = async ({userId,address}:Checkout) => {
+    const cart = await getActiceCartForUser({ userId });
+    const orderItems: IOrderItems[] = [];
+
+    for (const item of cart.items) {
+        const product = await productModel.findById(item.product);
+        
+    
+        if (!product) {
+        return { data: "product not found !", statusCode: 400 };
+    }
+        const orderItem: IOrderItems = {
+            productTitle: product.title,
+            productImage: product.image,
+            productPrice: item.unitPrice,
+            quantity:item.quantity
+            
+        }
+        orderItems.push(orderItem);
+
+    }
+    const order = await orderModel.create({
+            orderItems,
+            
+            userId,
+            address,
+            total: cart.totalamount
+
+        });
+
+       
+
+        cart.status = "complete";
+        await cart.save();
+      return { data: order, statusCode: 200 };
+}

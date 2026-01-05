@@ -1,5 +1,5 @@
 import express from "express"
-import { addItemsToCart, ClearCartForUser, deleteItemFromCart, getActiceCartForUser, updateItemtoCart } from "../services/cartService.js";
+import { addItemsToCart, checkout, ClearCartForUser, deleteItemFromCart, getActiceCartForUser, updateItemtoCart } from "../services/cartService.js";
 import validateJWT, { type ExtendRequest } from "../middleware/validateJWT.js";
  
 
@@ -8,15 +8,25 @@ const router = express.Router();
 
 router.get('/',validateJWT,  async (req: ExtendRequest , res) => {
     // get user cart 
-    const userId = req.user._id;
+    try {
+            const userId = req.user._id;
     const cart = await getActiceCartForUser({ userId});
     res.status(200).send(cart);
+    } catch (error) {
+        return res.status(500).send('internal server error');
+    }
+
 
 });
 router.delete('/', validateJWT, async (req: ExtendRequest, res) => {
-        const userId = req?.user?._id;
+    try {
+          const userId = req?.user?._id;
     const response = await ClearCartForUser({ userId });
      res.status(response.statusCode).send(response.data);
+    } catch (error) {
+        return res.status(500).send('internal server error');
+    }
+      
  });
 
 router.post('/item', validateJWT, async (req: ExtendRequest, res) => {
@@ -41,10 +51,18 @@ router.delete('/item/:productId', validateJWT, async (req: ExtendRequest, res) =
    
     const response = await deleteItemFromCart({ userId, productId });
     res.status(response.statusCode).send(response.data);
+});
 
+router.post('/checkout', validateJWT, async (req: ExtendRequest, res) => {
+    const userId = req?.user?._id;
+    const { address } = req.body;
+    const response = await checkout({ userId,address });
+    res.status(response.statusCode).send(response.data);
 
 
 });
+
+
 
 
 export default router;

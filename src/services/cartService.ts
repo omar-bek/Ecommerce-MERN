@@ -28,6 +28,24 @@ export const getActiceCartForUser = async ({userId}:GetActiveCart) => {
     return cart;
 };
 
+interface ClearCart {
+    userId: string;
+}
+export const ClearCartForUser = async ({ userId }: ClearCart) => {
+    const cart = await getActiceCartForUser({ userId });
+    
+    cart.items = [];
+    cart.totalamount = 0;
+
+     const updatedCart = await cart.save();
+    return { data: updatedCart, statusCode: 201 };
+
+
+    
+}
+
+
+
 interface cartItems {
     productId: ObjectId | any,
     userId: string,
@@ -123,4 +141,36 @@ export const updateItemtoCart = async ({ productId, quantity, userId }: cartItem
  
 
 };
+interface deleteCartItems {
+    productId: ObjectId | any,
+    userId: string,
+   
+   
+}
+
+export const deleteItemFromCart = async ({ productId,  userId }: deleteCartItems) => {
+    const cart = await getActiceCartForUser({ userId });
+
+    const existsCart = cart.items.find((p) => p.product.toString() === productId);
+
+    if (!existsCart) {
+        
+        return { data: "item is not exists in cart !", statusCode: 400 };
+
+
+    }
+
+    const otherCartItems = cart.items.filter((p) => p.product.toString() !== productId);
+    let total = otherCartItems.reduce((sum, product) => {
+        sum += product.quantity * product.unitPrice;
+        return sum;
+
+    }, 0);
+    
+    cart.items = otherCartItems;
+    cart.totalamount = total;
+        const updatedCart = await cart.save();
+       return { data: updatedCart, statusCode: 200 };
+}
+
 
